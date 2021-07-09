@@ -7,7 +7,9 @@ import { Role } from './entity/role.entity';
 
 @Injectable()
 export class RoleService {
-  constructor(@InjectRepository(Role) private roleRepository: Repository<Role>) {}
+  constructor(
+    @InjectRepository(Role) private roleRepository: Repository<Role>,
+  ) {}
 
   async all(): Promise<Role[]> {
     return await this.roleRepository.find();
@@ -16,9 +18,10 @@ export class RoleService {
     const [roles, total] = await this.roleRepository.findAndCount({
       take,
       skip: (page - 1) * take,
+      relations: ['permissions'],
     });
     return {
-      data: roles.map(({  ...roles }) => {
+      data: roles.map(({ ...roles }) => {
         return roles;
       }),
       metadata: {
@@ -29,14 +32,16 @@ export class RoleService {
     };
   }
 
-  async create(data: RoleCreateDTO): Promise<Role> {
+  async create(data: any): Promise<Role> {
     return this.roleRepository.save(data);
   }
 
   async findOne(condition): Promise<Role> {
-    return this.roleRepository.findOne(condition);
+    return this.roleRepository.findOne(condition, {
+      relations: ['permissions'],
+    });
   }
-  async update(id, data: RoleUpdateDTO): Promise<Role> {
+  async update(id, data: any): Promise<Role> {
     this.roleRepository.update(id, data);
     return await this.findOne({ id });
   }
@@ -46,5 +51,4 @@ export class RoleService {
     await this.roleRepository.delete(id);
     return userToDelete;
   }
-
 }

@@ -32,12 +32,11 @@ export class AuthController {
     if (body.password !== body.password_confirm) {
       throw new BadRequestException(`Passwords do not match!`);
     }
-
+    const { role_id, ...data } = body;
     const hashed = await bcrypt.hash(body.password, 12);
     return this.userService.create({
-      first_name: body.first_name,
-      last_name: body.last_name,
-      email: body.email,
+      ...data,
+      role: { id: role_id },
       password: hashed,
     });
   }
@@ -62,7 +61,6 @@ export class AuthController {
 
   @Get('user')
   @UseGuards(AuthGuard)
-
   async user(@Req() request: Request) {
     const cookie = request.cookies['jwt'];
     const data = await this.jwtService.verifyAsync(cookie);

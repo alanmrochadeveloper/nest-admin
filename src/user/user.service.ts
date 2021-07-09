@@ -13,7 +13,7 @@ export class UserService {
   async all(): Promise<User[]> {
     return await this.userRepository.find();
   }
-  async paginate(page: number = 1, take: number = 1): Promise<any> {
+  async paginate(page: number = 1, take: number = 1) {
     const [users, total] = await this.userRepository.findAndCount({
       take,
       skip: (page - 1) * take,
@@ -30,14 +30,15 @@ export class UserService {
     };
   }
 
-  async create(data: CreateUserDTO): Promise<User> {
+  async create(data: any): Promise<any> {
+    console.log('register data = ', data);
     return this.userRepository.save(data);
   }
 
   async findOne(condition): Promise<User> {
     return this.userRepository.findOne(condition);
   }
-  async update(id, data: UserUpdateDTO): Promise<User> {
+  async update(id, data: any): Promise<User> {
     this.userRepository.update(id, data);
     return await this.findOne({ id });
   }

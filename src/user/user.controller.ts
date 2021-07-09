@@ -27,11 +27,11 @@ export class UserController {
   @Post('user')
   async create(@Body() body: CreateUserDTO): Promise<User> {
     const password = await bcrypt.hash('1234', 12);
+    const { role_id, ...data } = body;
     return this.userService.create({
-      first_name: body.first_name,
-      last_name: body.last_name,
-      email: body.email,
+      ...data,
       password,
+      role: { id: role_id },
     });
   }
 
@@ -39,7 +39,7 @@ export class UserController {
   async all(
     @Query('page') page: string = '1',
     @Query('take') take: string = '1',
-  ): Promise<User[]> {
+  ){
     return await this.userService.paginate(+page, +take);
   }
 
@@ -51,9 +51,11 @@ export class UserController {
   @Put('user/:id')
   async update(
     @Param('id') id: string,
-    @Body() body: UserUpdateDTO,
+    @Body() body: UserUpdateDTO,//
   ): Promise<User> {
-    return this.userService.update(id, body);
+    const { role_id, ...data } = body;
+
+    return this.userService.update(id, { ...data, role: { id: role_id } });
   }
 
   @Delete('user/:id')

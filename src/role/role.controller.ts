@@ -22,8 +22,14 @@ export class RoleController {
   constructor(private roleService: RoleService) {}
 
   @Post('role')
-  async create(@Body() body: RoleCreateDTO): Promise<Role> {
-    return this.roleService.create(body);
+  async create(
+    @Body('name') name: string,
+    @Body('ids') ids: string[],
+  ): Promise<Role> {
+    return this.roleService.create({
+      name,
+      permissions: ids.map((id) => ({ id })),
+    });
   }
 
   @Get('roles')
@@ -42,9 +48,18 @@ export class RoleController {
   @Put('role/:id')
   async update(
     @Param('id') id: string,
-    @Body() body: RoleUpdateDTO,
+    @Body('name') name: string,
+    @Body('ids') ids: string[],// Permissions is which must be updated
   ): Promise<Role> {
-    return this.roleService.update(id, body);
+    this.roleService.update(id, { //first we update the name, can't do all at once
+      name,
+    });
+    const _role = await this.roleService.findOne({ id }); // then we catch the role which we want to update its permissions
+    await this.roleService.create({ //here he create a new row in the join table
+      ..._role,
+      permissions: ids.map((id) => ({ id })),
+    });
+    return _role;
   }
 
   @Delete('role/:id')
