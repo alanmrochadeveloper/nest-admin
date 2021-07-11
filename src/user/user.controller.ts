@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   ClassSerializerInterceptor,
   Controller,
@@ -8,6 +9,7 @@ import {
   Post,
   Put,
   Query,
+  Req,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -17,14 +19,19 @@ import * as bcrypt from 'bcrypt';
 import { CreateUserDTO } from './dto/user-create.dto';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { UserUpdateDTO } from './dto/user-update.dto';
+import { AuthService } from 'src/auth/auth.service';
+import { Request } from 'express';
 
 @UseGuards(AuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)
-@Controller()
+@Controller('users')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly authService: AuthService,
+  ) {}
 
-  @Post('user')
+  @Post()
   async create(@Body() body: CreateUserDTO): Promise<User> {
     const password = await bcrypt.hash('1234', 12);
     const { role_id, ...data } = body;
@@ -35,30 +42,56 @@ export class UserController {
     });
   }
 
-  @Get('users')
+  @Get()
   async all(
     @Query('page') page: string = '1',
     @Query('take') take: string = '1',
-  ){
-    return await this.userService.paginate(+page, +take);
+  ) {
+    return await this.userService.paginate(+page, +take, ['role']);
   }
 
-  @Get('user/:id')
+  @Get(':id')
   async findOne(@Param('id') id: string): Promise<User> {
+    return this.userService.findOne({ id }, ['role']);
+  }
+  @Put('info')
+  async updateInfo(
+    @Req() request: Request,
+    @Body() body: UserUpdateDTO,
+  ): Promise<User> {
+    const id = await this.authService.userId(request);
+    this.userService.update(id, body); // the author sent role, but as he stated it's not needed!
     return this.userService.findOne({ id });
   }
 
-  @Put('user/:id')
+  @Put('password')
+  async updatePassword(
+    @Req() request: Request,
+    @Body('password') password,
+    @Body('confirm_password') confirm_password,
+  ): Promise<User> {
+    if (password !== confirm_password) {
+      throw new BadRequestException(`passwords do not match`);
+    }
+
+    const id = await this.authService.userId(request);
+
+    const hashed = await bcrypt.hash(password, 12);
+
+    return this.userService.update(id, { password: hashed });
+  }
+
+  @Put(':id')
   async update(
     @Param('id') id: string,
-    @Body() body: UserUpdateDTO,//
+    @Body() body: UserUpdateDTO, //
   ): Promise<User> {
     const { role_id, ...data } = body;
 
     return this.userService.update(id, { ...data, role: { id: role_id } });
   }
 
-  @Delete('user/:id')
+  @Delete(':id')
   async delete(@Param('id') id: string): Promise<User> {
     return this.userService.delete(id);
   }

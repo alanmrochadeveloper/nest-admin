@@ -19,6 +19,7 @@ import { PassThrough } from 'stream';
 // import { Response } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { AuthGuard } from './auth.guard';
+import { AuthService } from './auth.service';
 
 @UseInterceptors(ClassSerializerInterceptor) // this decorator ensure that my @Exclude() decorator in user.entity password works, and won't let password shows up. This at controller level. but can be applied to handler level.
 @Controller()
@@ -26,6 +27,7 @@ export class AuthController {
   constructor(
     private userService: UserService,
     private jwtService: JwtService,
+    private authService: AuthService,
   ) {}
   @Post('register')
   async register(@Body() body: RegisterDto): Promise<any> {
@@ -62,10 +64,8 @@ export class AuthController {
   @Get('user')
   @UseGuards(AuthGuard)
   async user(@Req() request: Request) {
-    const cookie = request.cookies['jwt'];
-    const data = await this.jwtService.verifyAsync(cookie);
-    const user = await this.userService.findOne({ id: data['id'] });
-    return user;
+    const id = await this.authService.userId(request);
+    return this.userService.findOne({ id });
   }
   @Post('logout')
   @UseGuards(AuthGuard)
