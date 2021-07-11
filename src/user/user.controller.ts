@@ -21,6 +21,7 @@ import { AuthGuard } from 'src/auth/auth.guard';
 import { UserUpdateDTO } from './dto/user-update.dto';
 import { AuthService } from 'src/auth/auth.service';
 import { Request } from 'express';
+import { HasPermission } from 'src/permission/has-permission.decorator';
 
 @UseGuards(AuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)
@@ -32,6 +33,7 @@ export class UserController {
   ) {}
 
   @Post()
+  @HasPermission('users')
   async create(@Body() body: CreateUserDTO): Promise<User> {
     const password = await bcrypt.hash('1234', 12);
     const { role_id, ...data } = body;
@@ -43,6 +45,7 @@ export class UserController {
   }
 
   @Get()
+  @HasPermission('users')
   async all(
     @Query('page') page: string = '1',
     @Query('take') take: string = '1',
@@ -51,10 +54,12 @@ export class UserController {
   }
 
   @Get(':id')
+  @HasPermission('users')
   async findOne(@Param('id') id: string): Promise<User> {
     return this.userService.findOne({ id }, ['role']);
   }
   @Put('info')
+  @HasPermission('users')
   async updateInfo(
     @Req() request: Request,
     @Body() body: UserUpdateDTO,
@@ -65,6 +70,7 @@ export class UserController {
   }
 
   @Put('password')
+  @HasPermission('users')
   async updatePassword(
     @Req() request: Request,
     @Body('password') password,
@@ -82,6 +88,7 @@ export class UserController {
   }
 
   @Put(':id')
+  @HasPermission('users')
   async update(
     @Param('id') id: string,
     @Body() body: UserUpdateDTO, //
@@ -92,6 +99,7 @@ export class UserController {
   }
 
   @Delete(':id')
+  @HasPermission('users')
   async delete(@Param('id') id: string): Promise<User> {
     return this.userService.delete(id);
   }

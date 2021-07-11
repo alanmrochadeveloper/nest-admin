@@ -15,6 +15,7 @@ import { Response } from 'express';
 import { Parser } from 'json2csv';
 import { Order } from './entity/order.entity';
 import { OrderItem } from './entity/order-item.entity';
+import { HasPermission } from 'src/permission/has-permission.decorator';
 
 @UseInterceptors(ClassSerializerInterceptor)
 @UseGuards(AuthGuard)
@@ -22,6 +23,7 @@ import { OrderItem } from './entity/order-item.entity';
 export class OrderController {
   constructor(private orderService: OrderService) {}
   @Get('orders')
+  @HasPermission('orders')
   async all(
     @Query('page') page: string = '1',
     @Query('take') take: string = '1',
@@ -30,6 +32,7 @@ export class OrderController {
   }
   //yarn add json2csv @types/json2csv package installed to export csv
   @Post('export')
+  @HasPermission('orders')
   async export(@Res() res: Response) {
     const parser = new Parser({
       fields: ['ID', 'Name', 'Email', 'Product Title', 'Price', 'Quantity'],
@@ -67,5 +70,11 @@ export class OrderController {
     res.header('Content-Type', 'text/csv');
     res.attachment('orders.csv');
     return res.send(csv);
+  }
+
+  @Get('chart')
+  @HasPermission('orders')
+  async chart() {
+    return this.orderService.chart();
   }
 }

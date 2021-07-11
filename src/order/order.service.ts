@@ -7,9 +7,9 @@ import { Order } from './entity/order.entity';
 @Injectable()
 export class OrderService extends AbstractService {
   constructor(
-    @InjectRepository(Order) private orderService: Repository<Order>,
+    @InjectRepository(Order) private orderRepository: Repository<Order>,
   ) {
-    super(orderService);
+    super(orderRepository);
   }
 
   async paginate(page: number = 1, take: number = 1, relations = []) {
@@ -25,5 +25,12 @@ export class OrderService extends AbstractService {
       })),
       meta,
     };
+  }
+  async chart() {
+    return this.orderRepository
+      .query(`SELECT DATE_FORMAT(o.created_at, '%Y-%m-%d') as date, sum(i.price * i.quantity) as sum 
+    FROM orders o
+    JOIN order_items i on o.id = i.orderId
+    GROUP BY date;`);
   }
 }

@@ -1,8 +1,19 @@
-import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
+import { AuthGuard } from 'src/auth/auth.guard';
 import { PermissionCreateDTO } from './dto/permission-create.dto';
 import { Permission } from './entity/permission.entity';
+import { HasPermission } from './has-permission.decorator';
 import { PermissionService } from './permission.service';
 
+@UseGuards(AuthGuard)
 @Controller('permissions')
 export class PermissionController {
   constructor(private permissionService: PermissionService) {}
@@ -18,7 +29,7 @@ export class PermissionController {
   }
 
   @Delete(':id')
-  async delete(@Param('id') id: string): Promise<Permission>{
-      return this.permissionService.delete(id);
+  async delete(@Param('id') id: string): Promise<Permission> {
+    return this.permissionService.delete(id);
   }
 }
